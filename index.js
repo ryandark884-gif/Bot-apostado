@@ -5,7 +5,6 @@ const fs = require('fs');
 const path = require('path');
 const config = require('./config.json');
 
-// Define qual Token usar (Prioriza a variável do Railway, se não houver, usa o config.json)
 const TOKEN = process.env.TOKEN || config.token;
 
 const client = new Client({
@@ -46,10 +45,9 @@ for (const file of eventFiles) {
     }
 }
 
-// Configura o REST com o Token correto
 const rest = new REST().setToken(TOKEN);
 
-// 🚀 REGISTRO DE COMANDOS SLASH (MUDADO PARA INSTANTÂNEO NO SERVIDOR)
+// 🚀 REGISTRO DE COMANDOS SLASH (INSTANTÂNEO NO SERVIDOR)
 (async () => {
     try {
         console.log('Iniciando registro dos comandos slash no servidor...');
@@ -62,7 +60,6 @@ const rest = new REST().setToken(TOKEN);
             }
         }
 
-        // Alterado para applicationGuildCommands para ser instantâneo no seu servidor
         await rest.put(
             Routes.applicationGuildCommands(config.clientId, config.guildId),
             { body: commands },
@@ -74,26 +71,6 @@ const rest = new REST().setToken(TOKEN);
     }
 })();
 
-// 🔥 SISTEMA DE SLASH COMMANDS
-client.on("interactionCreate", async interaction => {
-    if (!interaction.isChatInputCommand()) return;
-
-    const command = client.commands.get(interaction.commandName);
-
-    if (!command) return;
-
-    try {
-        await command.execute(interaction);
-    } catch (error) {
-        console.error(error);
-        if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ content: "❌ Ocorreu um erro ao executar o comando.", ephemeral: true });
-        } else {
-            await interaction.reply({ content: "❌ Ocorreu um erro ao executar o comando.", ephemeral: true });
-        }
-    }
-});
-
 // 🛡️ TRATAMENTO DE ERROS (EVITA QUE O BOT CAIA)
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection:', reason);
@@ -103,5 +80,5 @@ process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
 });
 
-// 🔑 LOGIN (Usando o Token definido acima)
+// 🔑 LOGIN
 client.login(TOKEN);
