@@ -1,14 +1,13 @@
-const { Emojis } = require('../DataBaseJson');
-const config = require('../config.json'); // Importei o config para pegar o guildId
-const AllEmojis = [...require('../DataBaseJson/emojis.json'), ...require('../DataBaseJson/apostas.json')];
+const config = require('../config.json'); 
 const axios = require('axios');
+// Ajuste os caminhos abaixo se as pastas de JSON tiverem nomes diferentes
+const AllEmojis = [...require('../DataBaseJson/emojis.json'), ...require('../DataBaseJson/apostas.json')];
 
 // Função para buscar emojis do seu servidor
 async function fetchEmojis(client) {
     try {
-        // Corrigido: Agora usa a URL oficial da API do Discord e o ID do seu servidor
         const res = await axios.get(`https://discord.com{config.guildId}/emojis`, {
-            headers: { Authorization: `Bot ${client.token}` }
+            headers: { Authorization: `Bot ${process.env.TOKEN || config.token}` }
         });
         return res.data;
     } catch (e) { 
@@ -20,9 +19,8 @@ async function fetchEmojis(client) {
 // Função para criar emoji no seu servidor
 async function createEmoji(client, name, image) {
     try {
-        // Corrigido: Agora usa a URL oficial para POST (criação)
         const res = await axios.post(`https://discord.com{config.guildId}/emojis`, { name, image }, {
-            headers: { Authorization: `Bot ${client.token}` }
+            headers: { Authorization: `Bot ${process.env.TOKEN || config.token}` }
         });
         return `<:${name}:${res.data.id}>`;
     } catch (e) {
@@ -37,7 +35,6 @@ async function GetEmoji(client, emojiName) {
     if (exist) return `<:${emojiName}:${exist.id}>`;
     
     const data = AllEmojis.find(e => e.name === emojiName);
-    // Corrigido: Verifica se existe data antes de tentar criar
     if (data) return await createEmoji(client, data.name, data.image || data.base64);
     return null;
 }
