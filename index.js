@@ -1,5 +1,3 @@
-require('./config');
-
 const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
@@ -21,33 +19,39 @@ client.cooldowns = new Collection();
 
 // 📂 CARREGAMENTO DE COMANDOS
 const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+const commandFiles = fs.existsSync(commandsPath)
+  ? fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'))
+  : [];
 
 for (const file of commandFiles) {
     const filePath = path.join(commandsPath, file);
     const command = require(filePath);
-    if ('data' in command && 'execute' in command) {
+    if (command && 'data' in command && 'execute' in command) {
         client.commands.set(command.data.name, command);
     }
 }
 
 // 📂 CARREGAMENTO DE EVENTOS
 const eventsPath = path.join(__dirname, 'events');
-const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
+const eventFiles = fs.existsSync(eventsPath)
+  ? fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'))
+  : [];
 
 for (const file of eventFiles) {
     const filePath = path.join(eventsPath, file);
     const event = require(filePath);
-    if (event.once) {
-        client.once(event.name, (...args) => event.execute(...args));
-    } else {
-        client.on(event.name, (...args) => event.execute(...args));
+    if (event && event.name && event.execute) {
+        if (event.once) {
+            client.once(event.name, (...args) => event.execute(...args));
+        } else {
+            client.on(event.name, (...args) => event.execute(...args));
+        }
     }
 }
 
+// 🚀 REGISTRO DE COMANDOS SLASH (NO SERVIDOR)
 const rest = new REST().setToken(TOKEN);
 
-// 🚀 REGISTRO DE COMANDOS SLASH (INSTANTÂNEO NO SERVIDOR)
 (async () => {
     try {
         console.log('Iniciando registro dos comandos slash no servidor...');
@@ -71,13 +75,18 @@ const rest = new REST().setToken(TOKEN);
     }
 })();
 
-// 🛡️ TRATAMENTO DE ERROS (EVITA QUE O BOT CAIA)
-process.on('unhandledRejection', (reason, promise) => {
+// 🛡️ TRATAMENTO DE ERROS
+process.on('unhandledRejection', (reason) => {
   console.error('Unhandled Rejection:', reason);
 });
 
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
+});
+
+// 🔑 BOT ONLINE
+client.once("ready", () => {
+  console.log(`✅ Bot online: ${client.user.tag}`);
 });
 
 // 🔑 LOGIN
