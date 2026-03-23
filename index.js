@@ -5,6 +5,9 @@ const fs = require('fs');
 const path = require('path');
 const config = require('./config.json');
 
+// Define qual Token usar (Prioriza a variável do Railway, se não houver, usa o config.json)
+const TOKEN = process.env.TOKEN || config.token;
+
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -43,27 +46,29 @@ for (const file of eventFiles) {
     }
 }
 
-const rest = new REST().setToken(config.token);
+// Configura o REST com o Token correto
+const rest = new REST().setToken(TOKEN);
 
-// 🚀 REGISTRO DE COMANDOS SLASH
+// 🚀 REGISTRO DE COMANDOS SLASH (MUDADO PARA INSTANTÂNEO NO SERVIDOR)
 (async () => {
     try {
-        console.log('Iniciando registro dos comandos slash...');
+        console.log('Iniciando registro dos comandos slash no servidor...');
 
         const commands = [];
         for (const file of commandFiles) {
             const command = require(`./commands/${file}`);
-            if (command.data && typeof command.data.toJSON === 'function') {
+            if (command && command.data && typeof command.data.toJSON === 'function') {
                 commands.push(command.data.toJSON());
             }
         }
 
+        // Alterado para applicationGuildCommands para ser instantâneo no seu servidor
         await rest.put(
-            Routes.applicationCommands(config.clientId),
+            Routes.applicationGuildCommands(config.clientId, config.guildId),
             { body: commands },
         );
 
-        console.log('Comandos slash registrados com sucesso!');
+        console.log('Comandos slash registrados com sucesso no servidor!');
     } catch (error) {
         console.error('Erro ao registrar comandos:', error);
     }
@@ -98,5 +103,5 @@ process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
 });
 
-// 🔑 LOGIN
-client.login(config.token);
+// 🔑 LOGIN (Usando o Token definido acima)
+client.login(TOKEN);
