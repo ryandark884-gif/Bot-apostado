@@ -24,10 +24,17 @@ const commandFiles = fs.existsSync(commandsPath)
   : [];
 
 for (const file of commandFiles) {
-    const filePath = path.join(commandsPath, file);
-    const command = require(filePath);
-    if (command && 'data' in command && 'execute' in command) {
-        client.commands.set(command.data.name, command);
+    try {
+        const filePath = path.join(commandsPath, file);
+        const command = require(filePath);
+
+        if (command && command.data && command.execute) {
+            client.commands.set(command.data.name, command);
+        } else {
+            console.log(`⚠️ Comando inválido ignorado: ${file}`);
+        }
+    } catch (err) {
+        console.log(`❌ Erro ao carregar comando ${file}:`, err);
     }
 }
 
@@ -38,14 +45,21 @@ const eventFiles = fs.existsSync(eventsPath)
   : [];
 
 for (const file of eventFiles) {
-    const filePath = path.join(eventsPath, file);
-    const event = require(filePath);
-    if (event && event.name && event.execute) {
-        if (event.once) {
-            client.once(event.name, (...args) => event.execute(...args));
+    try {
+        const filePath = path.join(eventsPath, file);
+        const event = require(filePath);
+
+        if (event && event.name && event.execute) {
+            if (event.once) {
+                client.once(event.name, (...args) => event.execute(...args));
+            } else {
+                client.on(event.name, (...args) => event.execute(...args));
+            }
         } else {
-            client.on(event.name, (...args) => event.execute(...args));
+            console.log(`⚠️ Evento inválido ignorado: ${file}`);
         }
+    } catch (err) {
+        console.log(`❌ Erro ao carregar evento ${file}:`, err);
     }
 }
 
@@ -54,13 +68,17 @@ const rest = new REST().setToken(TOKEN);
 
 (async () => {
     try {
-        console.log('Iniciando registro dos comandos slash no servidor...');
+        console.log('🚀 Registrando comandos slash...');
 
         const commands = [];
         for (const file of commandFiles) {
-            const command = require(`./commands/${file}`);
-            if (command && command.data && typeof command.data.toJSON === 'function') {
-                commands.push(command.data.toJSON());
+            try {
+                const command = require(`./commands/${file}`);
+                if (command && command.data && typeof command.data.toJSON === 'function') {
+                    commands.push(command.data.toJSON());
+                }
+            } catch (err) {
+                console.log(`❌ Erro no comando ${file}:`, err);
             }
         }
 
@@ -69,24 +87,24 @@ const rest = new REST().setToken(TOKEN);
             { body: commands },
         );
 
-        console.log('Comandos slash registrados com sucesso no servidor!');
+        console.log('✅ Comandos registrados com sucesso!');
     } catch (error) {
-        console.error('Erro ao registrar comandos:', error);
+        console.error('❌ Erro ao registrar comandos:', error);
     }
 })();
 
-// 🛡️ TRATAMENTO DE ERROS
+// 🛡️ TRATAMENTO DE ERROS (NÃO DEIXA O BOT CAIR)
 process.on('unhandledRejection', (reason) => {
-  console.error('Unhandled Rejection:', reason);
+  console.error('⚠️ Unhandled Rejection:', reason);
 });
 
 process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception:', err);
+  console.error('⚠️ Uncaught Exception:', err);
 });
 
 // 🔑 BOT ONLINE
 client.once("ready", () => {
-  console.log(`✅ Bot online: ${client.user.tag}`);
+  console.log(`🤖 Bot online: ${client.user.tag}`);
 });
 
 // 🔑 LOGIN
