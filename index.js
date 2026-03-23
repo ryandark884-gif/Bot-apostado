@@ -17,6 +17,7 @@ const client = new Client({
 client.commands = new Collection();
 client.cooldowns = new Collection();
 
+// 📂 CARREGAMENTO DE COMANDOS
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
@@ -28,6 +29,7 @@ for (const file of commandFiles) {
     }
 }
 
+// 📂 CARREGAMENTO DE EVENTOS
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
 
@@ -43,6 +45,7 @@ for (const file of eventFiles) {
 
 const rest = new REST().setToken(config.token);
 
+// 🚀 REGISTRO DE COMANDOS SLASH
 (async () => {
     try {
         console.log('Iniciando registro dos comandos slash...');
@@ -62,10 +65,9 @@ const rest = new REST().setToken(config.token);
 
         console.log('Comandos slash registrados com sucesso!');
     } catch (error) {
-        console.error(error);
+        console.error('Erro ao registrar comandos:', error);
     }
 })();
-
 
 // 🔥 SISTEMA DE SLASH COMMANDS
 client.on("interactionCreate", async interaction => {
@@ -79,13 +81,15 @@ client.on("interactionCreate", async interaction => {
         await command.execute(interaction);
     } catch (error) {
         console.error(error);
-        await interaction.reply({
-            content: "❌ Ocorreu um erro ao executar o comando.",
-            ephemeral: true
-        });
+        if (interaction.replied || interaction.deferred) {
+            await interaction.followUp({ content: "❌ Ocorreu um erro ao executar o comando.", ephemeral: true });
+        } else {
+            await interaction.reply({ content: "❌ Ocorreu um erro ao executar o comando.", ephemeral: true });
+        }
     }
 });
 
+// 🛡️ TRATAMENTO DE ERROS (EVITA QUE O BOT CAIA)
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection:', reason);
 });
@@ -94,17 +98,5 @@ process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
 });
 
-client.login(config.token);  console.log('Comandos slash registrados com sucesso!');
-    } catch (error) {
-        console.error(error);
-    }
-})();
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection:', reason);
-});
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception:', err);
-});
-
-client.login(config.token); 
+// 🔑 LOGIN
+client.login(config.token);
