@@ -1,40 +1,42 @@
 const { Emojis } = require('../DataBaseJson');
-const AllEmojis = [
-  ...require('../DataBaseJson/emojis.json'),
-  ...require('../DataBaseJson/apostas.json')
-];
+const AllEmojis = [...require('../DataBaseJson/emojis.json'), ...require('../DataBaseJson/apostas.json')];
 const axios = require('axios');
 
 async function fetchEmojis(client) {
     try {
-        const response = await axios.get(`https://discord.com{client.user.id}/emojis`, {
+        const res = await axios.get(`https://discord.com{client.user.id}/emojis`, {
             headers: { Authorization: `Bot ${client.token}` }
         });
-        return response.data;
-    } catch (error) {
-        return [];
-    }
+        return res.data;
+    } catch (e) { return []; }
 }
 
 async function createEmoji(client, name, image) {
     try {
-        const response = await axios.post(`https://discord.com{client.user.id}/emojis`, {
-            name: name,
-            image: image
-        }, {
+        const res = await axios.post(`https://discord.com{client.user.id}/emojis`, { name, image }, {
             headers: { Authorization: `Bot ${client.token}` }
         });
-        console.log(`\x1b[32m[Emojis]\x1b\x1b\x1b[0m Erro ao salvar no banco: ${error.message}`);
+        return `<:${name}:${res.data.id}>`;
+    } catch (e) {
+        console.log("Erro ao criar emoji:", e.message);
+        return null;
     }
+}
+
+async function GetEmoji(client, emojiName) {
+    const emojis = await fetchEmojis(client);
+    const exist = emojis.find(e => e.name === emojiName);
+    if (exist) return `<:${emojiName}:${exist.id}>`;
+    const data = AllEmojis.find(e => e.name === emojiName);
+    if (data) return await createEmoji(client, data.name, data.image || data.base64);
+    return null;
 }
 
 async function UploadEmojis(client) {
     const emojis = await fetchEmojis(client);
-    const existingNames = new Set(emojis.map(e => e.name));
-    const uploads = AllEmojis
-        .filter(emoji => !existingNames.has(emoji.name))
-        .map(emoji => createEmoji(client, emoji.name, emoji.image));
-    return await Promise.all(uploads);
+    const names = new Set(emojis.map(e => e.name));
+    const ups = AllEmojis.filter(e => !names.has(e.name)).map(e => createEmoji(client, e.name, e.image));
+    return await Promise.all(ups);
 }
 
 module.exports = { GetEmoji, UploadEmojis };
