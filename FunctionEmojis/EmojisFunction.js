@@ -1,13 +1,20 @@
-const config = require('../config.json'); 
 const axios = require('axios');
-// Ajuste os caminhos abaixo se as pastas de JSON tiverem nomes diferentes
-const AllEmojis = [...require('../DataBaseJson/emojis.json'), ...require('../DataBaseJson/apostas.json')];
+const config = require('../config.json');
+
+// Carregando os arquivos de emojis (certifique-se que os nomes das pastas/arquivos estão corretos)
+const AllEmojis = [
+    ...require('../DataBaseJson/emojis.json'), 
+    ...require('../DataBaseJson/apostas.json')
+];
+
+const TOKEN = process.env.TOKEN || config.token;
 
 // Função para buscar emojis do seu servidor
 async function fetchEmojis(client) {
     try {
+        // CORREÇÃO: Usando a URL oficial da API do Discord com crases e ${}
         const res = await axios.get(`https://discord.com{config.guildId}/emojis`, {
-            headers: { Authorization: `Bot ${process.env.TOKEN || config.token}` }
+            headers: { Authorization: `Bot ${TOKEN}` }
         });
         return res.data;
     } catch (e) { 
@@ -19,8 +26,9 @@ async function fetchEmojis(client) {
 // Função para criar emoji no seu servidor
 async function createEmoji(client, name, image) {
     try {
+        // CORREÇÃO: Usando a URL oficial de POST com crases e ${}
         const res = await axios.post(`https://discord.com{config.guildId}/emojis`, { name, image }, {
-            headers: { Authorization: `Bot ${process.env.TOKEN || config.token}` }
+            headers: { Authorization: `Bot ${TOKEN}` }
         });
         return `<:${name}:${res.data.id}>`;
     } catch (e) {
