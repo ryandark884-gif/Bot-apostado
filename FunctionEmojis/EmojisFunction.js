@@ -1,12 +1,13 @@
 const axios = require('axios');
 const config = require('../config.json');
 
-// Carregando os arquivos de emojis (certifique-se que os nomes das pastas/arquivos estão corretos)
+// Carregando os arquivos de emojis
 const AllEmojis = [
     ...require('../DataBaseJson/emojis.json'), 
     ...require('../DataBaseJson/apostas.json')
 ];
 
+// Define o Token (Prioriza Railway, depois config.json)
 const TOKEN = process.env.TOKEN || config.token;
 
 // Função para buscar emojis do seu servidor
