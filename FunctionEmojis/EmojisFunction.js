@@ -1,4 +1,4 @@
-const { Emojis } = require('../DataBaseJson');
+const { Emojis } = require('../databaseJson');
 const AllEmojis = [
   ...require('./emojis.json'),
   ...require('./apostas.json')
